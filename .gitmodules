@@ -1,0 +1,3 @@
+[submodule "jobsync"]
+	path = jobsync
+	url = https://github.com/Gsync/jobsync.git
