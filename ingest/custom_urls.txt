@@ -1,0 +1,2 @@
+# Optional manual leads (one URL per line). These are preserved in jobs_raw.jsonl.
+# Parsing is not required in MVP.

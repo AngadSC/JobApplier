@@ -1,0 +1,72 @@
+{
+  "positive_keywords": [
+    "python",
+    "java",
+    "c++",
+    "sql",
+    "docker",
+    "kubernetes",
+    "aws",
+    "gcp",
+    "pytorch",
+    "tensorflow",
+    "machine learning",
+    "deep learning",
+    "nlp",
+    "computer vision",
+    "data engineering",
+    "spark",
+    "airflow",
+    "react",
+    "typescript",
+    "node"
+  ],
+  "role_keywords": {
+    "ai_ml": [
+      "machine learning",
+      "ml",
+      "deep learning",
+      "nlp",
+      "computer vision",
+      "genai",
+      "llm",
+      "model training",
+      "feature engineering"
+    ],
+    "data": [
+      "data science",
+      "data engineering",
+      "etl",
+      "analytics",
+      "spark",
+      "airflow"
+    ],
+    "fullstack": [
+      "full stack",
+      "frontend",
+      "backend",
+      "react",
+      "typescript",
+      "node",
+      "api"
+    ],
+    "backend": [
+      "backend",
+      "distributed systems",
+      "microservices",
+      "java",
+      "go",
+      "python"
+    ]
+  },
+  "negative_keywords": [
+    "phd required",
+    "5+ years",
+    "7+ years",
+    "senior",
+    "staff",
+    "principal",
+    "director",
+    "manager"
+  ]
+}
