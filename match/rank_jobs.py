@@ -23,12 +23,19 @@ RANKED_META_FILE = ROOT / "data" / "jobs_ranked.meta.json"
 RESUME_FILE = ROOT / "match" / "resume.txt"
 KEYWORDS_FILE = ROOT / "match" / "keywords.json"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+LATEX_SIGNAL_RE = re.compile(r"\\documentclass|\\begin\{document\}|\\section\{", re.IGNORECASE)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Rank internship jobs against resume.")
     parser.add_argument("--top", type=int, default=50, help="Number of rows to print in console.")
     parser.add_argument("--min-score", type=float, default=0.0, help="Optional minimum score cutoff.")
+    parser.add_argument(
+        "--resume-file",
+        type=Path,
+        default=RESUME_FILE,
+        help=f"Path to resume text (plain text or .tex). Default: {RESUME_FILE}",
+    )
     return parser.parse_args()
 
 
@@ -44,12 +51,32 @@ def read_jsonl(path: Path) -> List[Dict]:
     return rows
 
 
+def latex_to_text(text: str) -> str:
+    # Keep visible section names/content while dropping formatting commands.
+    cleaned = re.sub(r"(?<!\\)%.*", " ", text)
+    cleaned = re.sub(r"\\(sub)*section\*?\{([^}]*)\}", r" \2 ", cleaned)
+    cleaned = re.sub(r"\\(textbf|textit|emph|underline)\{([^}]*)\}", r" \2 ", cleaned)
+    cleaned = re.sub(r"\\href\{[^}]*\}\{([^}]*)\}", r" \1 ", cleaned)
+    cleaned = re.sub(r"\\url\{([^}]*)\}", r" \1 ", cleaned)
+    cleaned = re.sub(r"\\item\b", " ", cleaned)
+    cleaned = re.sub(r"\\begin\{[^}]+\}|\\end\{[^}]+\}", " ", cleaned)
+    cleaned = re.sub(r"\\[a-zA-Z]+\*?(?:\[[^\]]*\])?(?:\{[^{}]*\})?", " ", cleaned)
+    cleaned = cleaned.replace("\\\\", " ")
+    cleaned = re.sub(r"[{}$^_~]", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
 def load_resume(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Missing {path}")
-    text = path.read_text(encoding="utf-8").strip()
+    raw = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".tex" or LATEX_SIGNAL_RE.search(raw):
+        text = latex_to_text(raw)
+    else:
+        text = raw.strip()
     if not text or "Paste your plain-text resume content here" in text:
-        raise ValueError(f"{path} is empty. Paste your resume text before running rank_jobs.py.")
+        raise ValueError(f"{path} is empty. Add resume text before running rank_jobs.py.")
     return text
 
 
@@ -213,7 +240,7 @@ def main() -> int:
     args = parse_args()
 
     try:
-        resume = load_resume(RESUME_FILE)
+        resume = load_resume(args.resume_file)
         keyword_cfg = load_keywords(KEYWORDS_FILE)
     except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)

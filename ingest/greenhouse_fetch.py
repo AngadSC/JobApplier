@@ -3,7 +3,6 @@ import argparse
 import datetime as dt
 import html
 import json
-import os
 import re
 import sys
 import time
@@ -60,7 +59,9 @@ def cache_is_fresh(path: Path, max_age_hours: int) -> bool:
 
 
 def strip_html(raw_html: str) -> str:
-    text = re.sub(r"<[^>]+>", " ", raw_html or "")
+    # Greenhouse content is often entity-escaped HTML. Unescape first, then strip tags.
+    text = html.unescape(raw_html or "")
+    text = re.sub(r"<[^>]+>", " ", text)
     text = html.unescape(text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
@@ -89,13 +90,13 @@ def detect_workplace_type(location: str, title: str, description: str) -> str:
     return "unknown"
 
 
-def detect_employment_type(title: str, description: str) -> str:
-    merged = f"{title} {description}".lower()
-    if "part-time" in merged or "part time" in merged:
+def detect_employment_type(title: str) -> str:
+    title_l = title.lower()
+    if "part-time" in title_l or "part time" in title_l:
         return "part-time"
-    if "intern" in merged or "internship" in merged or "co-op" in merged or "coop" in merged:
+    if "intern" in title_l or "internship" in title_l or "co-op" in title_l or "coop" in title_l:
         return "internship"
-    if "full-time" in merged or "full time" in merged:
+    if "full-time" in title_l or "full time" in title_l:
         return "full-time"
     return "unknown"
 
@@ -116,11 +117,11 @@ def normalize_greenhouse_job(token: str, job: Dict) -> Dict:
     location = (job.get("location") or {}).get("name") or ""
     company = (job.get("company_name") or token).strip()
     workplace_type = detect_workplace_type(location, title, description_text)
-    employment_type = detect_employment_type(title, description_text)
+    employment_type = detect_employment_type(title)
 
     source_job_id = str(job.get("id")) if job.get("id") is not None else ""
     url = job.get("absolute_url") or ""
-    posted_at = safe_parse_iso(job.get("updated_at") or job.get("first_published"))
+    posted_at = safe_parse_iso(job.get("first_published") or job.get("updated_at"))
     updated_at = safe_parse_iso(job.get("updated_at"))
 
     return {

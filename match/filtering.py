@@ -126,13 +126,10 @@ def is_timeframe_reject(text: str) -> bool:
     return False
 
 
-def is_internshipish(title: str, description: str) -> bool:
-    combined = f"{title} {description}"
-    if not INTERN_INCLUDE_RE.search(combined):
-        return False
+def is_internshipish(title: str) -> bool:
     if TITLE_EXCLUDE_RE.search(title):
         return False
-    return True
+    return bool(INTERN_INCLUDE_RE.search(title))
 
 
 def is_remote(location: str, workplace_type: str, text: str) -> bool:
@@ -178,7 +175,7 @@ def filter_job(job: Dict) -> Tuple[bool, str, Dict]:
     season_tag = detect_season_tag(full_text)
     annotations = {"season_tag": season_tag}
 
-    if not is_internshipish(title, desc):
+    if not is_internshipish(title):
         return False, "not_internshipish", annotations
     if is_timeframe_reject(full_text):
         return False, "wrong_year", annotations
